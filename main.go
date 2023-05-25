@@ -17,19 +17,20 @@ type ringBuffer struct {
 }
 
 func (r *ringBuffer) Run() {
-	bufSize := cap(r.outCh)
 	defer close(r.outCh)
 
-	if bufSize == 0 {
+	if cap(r.outCh) == 0 {
 		for _ = range r.inCh {
 		}
 	}
 
 	for val := range r.inCh {
-		if len(r.outCh) == bufSize {
+		select {
+		case r.outCh <- val:
+		default:
 			<-r.outCh
+			r.outCh <- val
 		}
-		r.outCh <- val
 	}
 }
 
