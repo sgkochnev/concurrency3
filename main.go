@@ -18,6 +18,12 @@ type ringBuffer struct {
 
 func (r *ringBuffer) Run() {
 	bufSize := cap(r.outCh)
+	defer close(r.outCh)
+
+	if bufSize == 0 {
+		for _ = range r.inCh {
+		}
+	}
 
 	for val := range r.inCh {
 		if len(r.outCh) == bufSize {
@@ -25,13 +31,11 @@ func (r *ringBuffer) Run() {
 		}
 		r.outCh <- val
 	}
-
-	close(r.outCh)
 }
 
 func main() {
 	inCh := make(chan int)
-	outCh := make(chan int, 4)
+	outCh := make(chan int, 0)
 	rb := NewRingBuffer(inCh, outCh)
 	go rb.Run()
 
